@@ -1,0 +1,662 @@
+{
+  "address": "9wSigVj1e2gXUL2SCYv59PLDibscoCaJaWjKwTfczpa7",
+  "metadata": {
+    "name": "anchor_prog",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "end",
+      "discriminator": [
+        180,
+        160,
+        249,
+        217,
+        194,
+        121,
+        70,
+        16
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true
+        },
+        {
+          "name": "table",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "game",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "hit_dealer",
+      "discriminator": [
+        31,
+        91,
+        237,
+        68,
+        207,
+        15,
+        79,
+        67
+      ],
+      "accounts": [
+        {
+          "name": "table",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "game",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "hit_player",
+      "discriminator": [
+        44,
+        35,
+        248,
+        121,
+        39,
+        232,
+        170,
+        8
+      ],
+      "accounts": [
+        {
+          "name": "player"
+        },
+        {
+          "name": "table",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "game",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "new_bet",
+      "discriminator": [
+        136,
+        206,
+        155,
+        213,
+        156,
+        37,
+        176,
+        88
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "table",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "and seeds/bump are asserted. It’s only used to hold/send lamports."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "game",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "bet_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "random_card",
+      "discriminator": [
+        92,
+        237,
+        0,
+        42,
+        36,
+        43,
+        207,
+        85
+      ],
+      "accounts": [
+        {
+          "name": "table",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "game",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "randomness",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "stand_dealer",
+      "discriminator": [
+        10,
+        11,
+        69,
+        105,
+        61,
+        126,
+        113,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "table",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "game",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "stand_player",
+      "discriminator": [
+        141,
+        17,
+        11,
+        174,
+        183,
+        224,
+        237,
+        110
+      ],
+      "accounts": [
+        {
+          "name": "player"
+        },
+        {
+          "name": "table",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "game",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "table_create",
+      "discriminator": [
+        13,
+        164,
+        90,
+        150,
+        6,
+        91,
+        173,
+        129
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "table",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "Safety: seeds and bump are enforced by Anchor; `owner = system_program::ID` ensures",
+            "it is a System Account; `space = 0` means no data to deserialize."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  50
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Game",
+      "discriminator": [
+        27,
+        90,
+        166,
+        125,
+        74,
+        100,
+        121,
+        18
+      ]
+    },
+    {
+      "name": "Table",
+      "discriminator": [
+        34,
+        100,
+        138,
+        97,
+        236,
+        129,
+        230,
+        112
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidBet",
+      "msg": "Invalid bet amount"
+    },
+    {
+      "code": 6001,
+      "name": "BadState",
+      "msg": "Bad game state for this action"
+    },
+    {
+      "code": 6002,
+      "name": "VaultInsufficient",
+      "msg": "Vault has insufficient lamports"
+    },
+    {
+      "code": 6003,
+      "name": "UnauthorizedVrf",
+      "msg": "Unauthorized VRF callback"
+    },
+    {
+      "code": 6004,
+      "name": "DeckExhausted",
+      "msg": "Deck exhausted"
+    },
+    {
+      "code": 6005,
+      "name": "RngExhausted",
+      "msg": "Randomness exhausted"
+    },
+    {
+      "code": 6006,
+      "name": "DeckEmpty",
+      "msg": "Deck ran out of cards"
+    },
+    {
+      "code": 6007,
+      "name": "NotPlayer",
+      "msg": "Not player"
+    }
+  ],
+  "types": [
+    {
+      "name": "Game",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "table",
+            "type": "pubkey"
+          },
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "bet_amount",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "Status"
+              }
+            }
+          },
+          {
+            "name": "used_mask",
+            "type": "u64"
+          },
+          {
+            "name": "rng",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "rng_cursor",
+            "type": "u8"
+          },
+          {
+            "name": "player_cards",
+            "type": "bytes"
+          },
+          {
+            "name": "dealer_cards",
+            "type": "bytes"
+          },
+          {
+            "name": "player_stood",
+            "type": "bool"
+          },
+          {
+            "name": "dealer_stood",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Status",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AwaitingRandomness"
+          },
+          {
+            "name": "PlayerTurn"
+          },
+          {
+            "name": "DealerTurn"
+          },
+          {
+            "name": "Settled"
+          },
+          {
+            "name": "Closed"
+          },
+          {
+            "name": "PlayerWin"
+          },
+          {
+            "name": "DealerWin"
+          },
+          {
+            "name": "Push"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Table",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "table_bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
