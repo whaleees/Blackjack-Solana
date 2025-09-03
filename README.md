@@ -1,93 +1,168 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/idxPpgnz)
-![School of Solana](https://github.com/Ackee-Blockchain/school-of-solana/blob/master/.banner/banner.png?raw=true)
+# Blackjack-SOL 🎴
 
-## 📚Solana Program
-We are about halfway through the course, and you already have some experience with programming on Solana. It is time to create something on your own! You will be building a dApp that will serve as the culmination of everything you have learned so far. Feel free to implement whatever comes to your mind, (as long as it passes the requirements).
+**Deployed Frontend URL:** [https://blackjack-sol-lilac.vercel.app/](https://blackjack-sol-lilac.vercel.app/)  
+**Solana Program ID:** `9wSigVj1e2gXUL2SCYv59PLDibscoCaJaWjKwTfczpa7`
 
-**This does not mean that the School of Solana is coming to an end just yet!** There are still several exciting lectures ahead, as well as one security related task.
+---
 
-### Task details
-This task consists of two parts:
-1. **Core of your dApp**
-    - A deployed Solana program.
-2. **Frontend**
-    - A simple frontend to interact with the dApp.
+## Project Overview
 
-### Requirements
-- An Anchor program deployed on **Devnet** or **Mainnet**.
-- The Anchor program must use a PDA (Program Derived Address).
-- At least one TypeScript **test** for each Anchor program instruction. These tests should cover both **happy** and **unhappy** (intentional error-triggering) scenarios.
-- A simple **frontend** deployed using your preferred provider (for more info, check below).
-- A filled out **PROJECT_DESCRIPTION.md** file.
+### Description
+Blackjack-SOL is a decentralized **Blackjack game** built on **Solana** using **Anchor** for the on-chain smart contract and **Next.js** for the frontend.  
 
-### Ideas
-We highly recommend starting with something simple. Take time to think through your project and work on it in iterations. Do not try to implement everything at once!
+Players can connect their Solana wallet, place bets in SOL, and play a fair on-chain game of Blackjack against the dealer. All bets, payouts, and game states are fully managed by the smart contract, ensuring transparency and fairness.
 
-Below is a list of few ideas to get you started:
-- **Social app**
-    - Instagram
-    - Giphy
-    - Friendtech
-    - Spotify
-- **Blog**
-- **Voting** ([D21 - Janeček method](https://www.ih21.org/en/guidelines))
-- **DeFi**
-    - Crowdfunding
-    - Raffles
-    - Escrow
-    - Tipping
-    - Lending ([Save Documentation](https://docs.save.finance/))
-    - Liquid Staking ([Marinade Documentation](https://docs.marinade.finance/))
-    - Data Query with Pyth ([Pyth Documentation](https://docs.pyth.network/price-feeds))
-    - AMM ([Raydium Documentation](https://raydium.gitbook.io/raydium/))
-- **Gaming**
-    - Browser Game ([Gaming on Solana](https://solanacookbook.com/gaming/nfts-in-games.html#nfts-in-games))
+---
 
-### Deadline
-The deadline for this task is **Wednesday, August 27th, at 23:59 UTC**.
->[!CAUTION]
->Note that we will not accept submissions after the deadline.
+### Key Features
 
-### Submission
-There are two folders, one for the Anchor project, and one for the frontend. Push your changes to the **main** branch of **this** repository.
+- **Wallet Integration**  
+  Connect via Phantom or any Solana Wallet Adapter.
 
->[!IMPORTANT]
->It is essential that you fill out the `PROJECT_DESCRIPTION.md` template completely and accurately. This document will be used by AI for the initial evaluation, so provide detailed information about your project, including working links, clear descriptions, and technical implementation details.
+- **On-chain Game State**  
+  All game data (bets, cards, outcomes) is stored in Solana accounts.
 
-### Evaluation
-The evaluation process is based on the **requirements**. If you meet the requirements, you pass the task!
+- **Betting & Vault System**  
+  Player bets are escrowed in a **Vault PDA**, guaranteeing automatic payouts.
 
->[!NOTE]
->We have a record number of participants this season, so the first round of evaluations will be conducted by AI to verify requirements before manual review. AI can make mistakes. If you believe you fulfilled all requirements but weren't graded correctly, please create a support ticket and we will resolve the issue.
+- **Dealer AI**  
+  Dealer follows standard Blackjack rules: hits until 17, stands otherwise.
 
->[!CAUTION]
->We expect original work that demonstrates your understanding and creativity. While you may draw inspiration from examples covered in lessons and tasks, **direct copying is not acceptable**. If you choose to build upon an example from the School of Solana materials, you must significantly expand it with additional features, instructions, and functionality to showcase your learning progress. 
+- **Randomness**  
+  Cards are drawn using seeded pseudo-randomness.
 
-### Example Workflow
-Let's say you are going to implement the Twitter dApp as the Solana Program. Here's how the steps could look:
+- **Frontend UI**  
+  Built with Next.js + TailwindCSS.  
+  - Player cards shown in full.  
+  - Dealer shows only one card until their turn (authentic Blackjack behavior).  
+  - Payout banner shows net gain/loss after settlement.  
 
-**1.** Implement Twitter dApp using the Anchor framework.
+---
 
-**2.** Test the Twitter dApp using the Anchor framework.
+### How to Use the dApp
 
-**3.** Deploy the Twitter dApp on the Solana Devnet.
+1. **Connect Wallet**  
+   Open the site and connect your wallet.  
 
-**4.** Using the create solana dapp template, implement frontend for the Twitter dApp.
+2. **Start a Game**  
+   Enter your bet amount in SOL, then click **Start Game**.  
 
-**5.** Publish Frontend using [Vercel](https://vercel.com).
+3. **Player Actions**  
+   - **Hit**: Draw another card.  
+   - **Stand**: Stop drawing and pass the turn to the dealer.  
 
-**6.** Fill out the PROJECT_DESCRIPTION.md template.
+4. **Dealer Actions**  
+   Dealer reveals their hidden card, hits until 17 or more, then stands.  
 
-**7.** Submit the Twitter dApp using GitHub Classroom.
+5. **Settlement**  
+   - Winner is determined by Blackjack rules.  
+   - Program transfers payout to the player automatically.  
 
-### Useful Links
-- [Vercel](https://vercel.com)
-- [Create Solana Dapp](https://github.com/solana-foundation/create-solana-dapp)
-- [Account Macro Constraints](https://docs.rs/anchor-lang/latest/anchor_lang/derive.Accounts.html#constraints)
-- [Solana Developers Courses](https://solana.com/developers/courses)
+---
 
------
+## Program Architecture
 
-### Need help?
->[!TIP]
->If you have any questions, feel free to reach out to us on [Discord](https://discord.gg/z3JVuZyFnp).
+### PDA Usage
+
+The program uses **Program Derived Addresses (PDAs)** for deterministic accounts:
+
+- **Table PDA (`table_state2`)**  
+  Stores metadata about the table, including authority and vault reference.  
+
+- **Vault PDA (`vault2`)**  
+  Escrow account where all bets are held and payouts are made.  
+
+These PDAs ensure deterministic, secure account handling.
+
+---
+
+### Program Instructions
+
+- **`table_create`** → Initializes the table PDA and vault PDA.  
+- **`new_bet`** → Starts a new game, transfers bet to the vault.  
+- **`random_card` (dev)** → Seeds randomness and deals initial cards.  
+- **`hit_player`** → Player draws a new card.  
+- **`stand_player`** → Player stands, ending their turn.  
+- **`hit_dealer`** → Dealer draws (only valid during `DealerTurn`).  
+- **`stand_dealer`** → Dealer stands, moves toward settlement.  
+- **`end`** → Settles the game and distributes payouts.  
+
+---
+
+### Account Structure
+
+```rust
+#[account]
+pub struct Table {
+    pub authority: Pubkey,  // casino authority
+    pub vault: Pubkey,      // vault PDA holding bets
+    pub vault_bump: u8,     // PDA bump
+}
+
+#[account]
+pub struct Game {
+    pub table: Pubkey,          // Table PDA reference
+    pub player: Pubkey,         // Player’s wallet
+    pub bet_amount: u64,        // Bet in lamports
+    pub status: Status,         // Game lifecycle
+    pub player_cards: Vec<u8>,  // Player hand
+    pub dealer_cards: Vec<u8>,  // Dealer hand
+    pub rng: Vec<u8>,           // Random seed
+    pub rng_cursor: u8,         // RNG index
+    pub used_mask: u64,         // Card usage bitmask
+    pub player_stood: bool,     // Did player stand?
+    pub dealer_stood: bool,     // Did dealer stand?
+}
+```
+
+# Testing
+
+## Test Coverage
+
+We designed our tests to cover both **happy paths** (intended user flows) and **unhappy paths** (error conditions) to ensure program correctness and safety.
+
+### Happy Path Tests
+
+- **Create Table**: Initializes the table PDA and vault PDA successfully.  
+- **Fund Vault**: Transfers SOL from authority into the vault PDA.  
+- **New Bet**: Starts a new game, deducts bet from player, and escrows into vault.  
+- **Randomness Fulfillment**: Seeds RNG and deals two cards to both player and dealer.  
+- **Player Hit**: Player draws an additional card and game state updates.  
+- **Player Stand**: Player stands, passing control to the dealer.  
+- **Dealer Hit**: Dealer draws until rules are satisfied (hits until 17).  
+- **Dealer Stand**: Dealer stands, moving game state to settlement.  
+- **Settlement**: Game closes and payout is transferred from vault to player.  
+
+### Unhappy Path Tests
+
+- **Zero Bet**: Player tries to bet 0 lamports → rejected with `InvalidBet`.  
+- **Vault Insufficient**: Game rejected if vault can’t cover potential max payout.  
+- **Premature Player Action**: Player hits/stands before randomness fulfillment → rejected.  
+- **Late Player Action**: Player attempts to act after game is already settled → rejected.  
+- **Dealer Wrong Turn**: Dealer hits/stands outside of `DealerTurn` → rejected.  
+- **Premature Settlement**: Settlement called during `PlayerTurn` → rejected.  
+
+---
+
+## Running Tests
+
+Run the full test suite with:
+
+```bash
+anchor test
+```
+
+### Additional Notes for Evaluators
+
+- This project demonstrates how traditional casino games can be implemented fairly and transparently on-chain.  
+- All critical state transitions (bets, card draws, dealer actions, and settlements) are enforced by the Solana smart contract using Anchor.  
+- Program Derived Addresses (PDAs) are used for secure state management:
+  - **Table PDA**: Holds authority reference and vault link.
+  - **Vault PDA**: Escrows SOL used for betting and payouts.  
+- The frontend is built with **Next.js 15** and integrates Solana Wallet Adapter for smooth wallet connection.  
+- Randomness is mocked for testing using developer-supplied bytes, but could be upgraded to use Switchboard or another verifiable randomness oracle in production.  
+- The dealer logic is deterministic and fully transparent (hits until 17, stands otherwise).  
+- The UI hides dealer hole cards until the end of the round, mimicking real-world Blackjack gameplay.  
+- The full test suite (`anchor test`) covers both happy and unhappy paths to ensure program safety.  
+- Deployed frontend: **[https://blackjack-sol-lilac.vercel.app/](https://blackjack-sol-lilac.vercel.app/)**  
+- Program ID (Devnet): **9wSigVj1e2gXUL2SCYv59PLDibscoCaJaWjKwTfczpa7**  
