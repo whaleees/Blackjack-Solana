@@ -1,374 +1,184 @@
+// src/app/games/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import * as web3 from "@solana/web3.js";
-import * as anchor from "@coral-xyz/anchor";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { useProgram } from "@/lib/useProgram";
-import type { AnchorProg } from "@/types/anchor_prog";
-import { cardsToText } from "@/lib/cards";
-import { randomBytes } from "@/lib/random";
-import { fetchGame, GameAccountShape, anchorEnumToLabel } from "@/lib/actions/blackjack";
+import { useMemo, useRef, useState } from "react";
+import { useBlackjackGame } from "@/lib/games/blackjack/useBlackjackGame";
+import CasinoTable from "@/components/games/CasinoTable";
+import CardHand from "@/components/games/CardHand";
+import ChipRail from "@/components/games/ChipRail";
+import BetCircle from "@/components/games/BetCircle";
+import BetEditor from "@/components/games/BetEditor";
 
-
-function handTotal(cards: number[]) {
-    let total = 0, aces = 0;
-    for (const c of cards) {
-        const r = (c % 13) + 1;
-        if (r === 1) { total += 11; aces++; }
-        else if (r >= 11) total += 10;
-        else total += r;
-    }
-    while (total > 21 && aces > 0) { total -= 10; aces--; }
-    return total;
-}
-function isBJ(cards: number[]) {
-    return cards.length === 2 && handTotal(cards) === 21;
-}
-function computeOutcomeLower(player: number[], dealer: number[]): "playerwin" | "dealerwin" | "push" {
-    const pt = handTotal(player);
-    const dt = handTotal(dealer);
-    const pBJ = isBJ(player), dBJ = isBJ(dealer);
-
-    if (pt > 21) return "dealerwin";
-    if (dt > 21) return "playerwin";
-    if (pBJ && !dBJ) return "playerwin";
-    if (dBJ && !pBJ) return "dealerwin";
-    if (pt > dt) return "playerwin";
-    if (pt < dt) return "dealerwin";
-    return "push";
-}
-
-function fmtSolLamports(lamports: bigint) {
-    const sol = Number(lamports) / 1_000_000_000;
-    return (Math.sign(sol) >= 0 ? "+" : "−") + Math.abs(sol).toLocaleString(undefined, { maximumFractionDigits: 9 });
-}
-
-function computePayoutLamports(
-    player: number[],
-    dealer: number[],
-    betLamports: bigint
-): bigint {
-    const pt = handTotal(player);
-    const dt = handTotal(dealer);
-    const pBJ = isBJ(player);
-    const dBJ = isBJ(dealer);
-
-    if (pt > 21) return 0n;
-    if (dt > 21) return betLamports * 2n;
-
-    if (pBJ && !dBJ) return betLamports + (betLamports * 3n) / 2n;
-    if (dBJ && !pBJ) return 0n;
-
-    if (pt > dt) return betLamports * 2n;
-    if (pt < dt) return 0n;
-    return betLamports; // push
-}
+// helpers
+const round01 = (n: number) => Math.max(0, Math.round(n * 10) / 10);
+const sum = (arr: number[]) => round01(arr.reduce((a, b) => a + b, 0));
 
 export default function BlackjackTable() {
-    const GAME_KEY = "blackjack.currentGame";
-    const { program, loading, error } = useProgram<AnchorProg>();
-    const { connection } = useConnection();
-    const { publicKey } = useWallet();
+    const {
+        publicKey, error, currentGame, gameAcc,
+        statusRaw, statusKey, canHit, canStand,
+        lastSig, outcomeKey, payoutInfo,
+        startGame, hit, stand, resetGame,
+        setBetSol,
+    } = useBlackjackGame();
 
-    const [currentGame, setCurrentGame] = useState<web3.PublicKey | null>(null);
-    const [gameAcc, setGameAcc] = useState<GameAccountShape | null>(null);
-    const [betSol, setBetSol] = useState<string>("1");
-    const [lastSig, setLastSig] = useState<string | null>(null);
+    // ---- chip stack (LIFO) ----
+    const [chipStack, setChipStack] = useState<number[]>([]);
+    const total = useMemo(() => sum(chipStack), [chipStack]);
+    const syncBet = (n: number) => setBetSol(String(round01(n)));
 
-    const statusRaw = gameAcc ? anchorEnumToLabel(gameAcc.status) : "unknown";
-    const statusKey = statusRaw.toLowerCase();
+    const addChip = (d: number) => setChipStack(s => { const n = [...s, d]; syncBet(sum(n)); return n; });
+    const popChip = () => setChipStack(s => { if (!s.length) return s; const n = s.slice(0, -1); syncBet(sum(n)); return n; });
+    const subChip = (d: number) => setChipStack(s => {
+        const i = [...s].lastIndexOf(d); if (i < 0) return s;
+        const n = s.slice(0, i).concat(s.slice(i + 1)); syncBet(sum(n)); return n;
+    });
+    const clearChips = () => { setChipStack([]); syncBet(0); };
 
-    const outcomeKey =
-        ["playerwin", "dealerwin", "push"].includes(statusKey)
-            ? (statusKey as "playerwin" | "dealerwin" | "push")
-            : (statusKey === "closed" && gameAcc
-                ? computeOutcomeLower(gameAcc.playerCards, gameAcc.dealerCards)
-                : null);
+    // counts (for editor)
+    const counts = useMemo(() => {
+        const c: Record<number, number> = { 0.1: 0, 0.5: 0, 1: 0, 5: 0, 10: 0, 25: 0 };
+        chipStack.forEach(d => { c[d] = (c[d] ?? 0) + 1; });
+        return c;
+    }, [chipStack]);
 
-    const canHit = statusKey === "playerturn";
-    const canStand = statusKey === "playerturn";
+    // game state
+    const dealerCards = gameAcc?.dealerCards ?? [];
+    const playerCards = gameAcc?.playerCards ?? [];
+    const inDealerPhase = statusKey === "dealerturn" || statusKey === "settled";
+    const roundOver = ["closed", "playerwin", "dealerwin", "push"].includes(statusKey);
+    const canStartNew = !currentGame || statusKey === "closed";
 
-    const roundOver =
-        ["closed", "playerwin", "dealerwin", "push"].includes(statusKey);
-
-    function dealerText() {
-        const cards = gameAcc?.dealerCards || [];
-        if (cards.length === 0) return "—";
-
-        if (roundOver) {
-            return cardsToText(cards);
-        }
-
-        // Show only the first dealer card; mask the rest
-        const shown = cardsToText([cards[0]]);
-        const hiddenCount = Math.max(0, cards.length - 1);
-        const hidden = hiddenCount > 0 ? " " + "🂠".repeat(hiddenCount) : "";
-        return shown + hidden; // e.g., "K♣ 🂠"
-    }
-
-
-    // PDAs
-    const [tablePda] = useMemo(
-        () =>
-            program
-                ? web3.PublicKey.findProgramAddressSync([Buffer.from("table_state2")], program.programId)
-                : [web3.PublicKey.default],
-        [program]
-    );
-
-    const [vaultPda] = useMemo(
-        () =>
-            program
-                ? web3.PublicKey.findProgramAddressSync([Buffer.from("vault2")], program.programId)
-                : [web3.PublicKey.default],
-        [program]
-    );
-
-    // wrap tx runner
-    const run = async (f: () => Promise<string | void>) => {
-        const sig = await f();
-        if (typeof sig === "string") {
-            setLastSig(sig);
-            await connection.confirmTransaction(sig, "confirmed");
-        }
+    // Deal
+    const handleDeal = async () => {
+        if (!publicKey || !canStartNew || total <= 0) return;
+        await startGame();
     };
 
-    // Restore a game from URL/localStorage
-    useEffect(() => {
-        if (!program) return;
-        const fromUrl = new URLSearchParams(window.location.search).get("game");
-        const restored: string | null = fromUrl ?? localStorage.getItem(GAME_KEY);
-        if (!restored) return;
+    // ----- stack quick editor (open via long-press or double-click) -----
+    const [editOpen, setEditOpen] = useState(false);
+    const lpTimer = useRef<number | null>(null);
 
-        try {
-            const g = new web3.PublicKey(restored);
-            setCurrentGame(g);
-            fetchGame(program, g).then(setGameAcc).catch(console.error);
-        } catch {
-            localStorage.removeItem(GAME_KEY);
-        }
-    }, [program]);
-
-    // Auto-finish: if DealerTurn or Settled -> call end() (your on-chain end() will draw for dealer if needed)
-    useEffect(() => {
-        if (!program || !currentGame || !publicKey) return;
-        if (statusKey !== "dealerturn" && statusKey !== "settled") return;
-
-        (async () => {
-            try {
-                const sig = await program.methods
-                    .end()
-                    .accounts({
-                        game: currentGame,
-                        player: publicKey,          // payout recipient
-                    })
-                    .rpc();
-                setLastSig(sig);
-                const acc = await fetchGame(program, currentGame);
-                setGameAcc(acc);
-            } catch (e) {
-                console.error("auto end() failed:", e);
-            }
-        })();
-    }, [statusKey, program, currentGame, publicKey, tablePda, vaultPda]);
-
-    // Actions
-    const startGame = async () => {
-        if (!program || !publicKey) return;
-        const gameKp = web3.Keypair.generate();
-        const lamports = new anchor.BN(Math.round((parseFloat(betSol || "0") || 0) * 1_000_000_000));
-
-        // newBet (payer = player)
-        await run(async () =>
-            program.methods
-                .newBet(lamports)
-                .accounts({
-                    player: publicKey,
-                    game: gameKp.publicKey,
-                })
-                .signers([gameKp])
-                .rpc()
-        );
-
-        // persist handle
-        setCurrentGame(gameKp.publicKey);
-        localStorage.setItem(GAME_KEY, gameKp.publicKey.toBase58());
-        const url = new URL(window.location.href);
-        url.searchParams.set("game", gameKp.publicKey.toBase58());
-        window.history.replaceState(null, "", url);
-
-        // fulfill randomness (dev) — your DevFulfill requires { authority, table, game }
-        const randomness = randomBytes(32);
-        await run(async () =>
-            program.methods
-                .randomCard(Array.from(randomness))
-                .accounts({
-                    game: gameKp.publicKey,
-                })
-                .rpc()
-        );
-
-        const acc = await fetchGame(program, gameKp.publicKey);
-        setGameAcc(acc);
+    const onStackPointerDown = () => {
+        if (!canStartNew) return;
+        lpTimer.current = window.setTimeout(() => { setEditOpen(true); lpTimer.current = null; }, 450);
     };
-
-    const hit = async () => {
-        if (!program || !publicKey || !currentGame) return;
-        await run(async () =>
-            program.methods
-                .hitPlayer()
-                .accounts({
-                    game: currentGame,
-                    player: publicKey,
-                })
-                .rpc()
-        );
-        const acc = await fetchGame(program, currentGame);
-        setGameAcc(acc);
+    const onStackPointerUp = () => {
+        if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null; }
     };
-
-    const stand = async () => {
-        if (!program || !publicKey || !currentGame) return;
-        await run(async () =>
-            program.methods
-                .standPlayer()
-                .accounts({
-                    game: currentGame,
-                    player: publicKey,
-                })
-                .rpc()
-        );
-        const acc = await fetchGame(program, currentGame);
-        setGameAcc(acc);
-    };
-
-    const resetGame = () => {
-        localStorage.removeItem(GAME_KEY);
-        const url = new URL(window.location.href);
-        url.searchParams.delete("game");
-        window.history.replaceState(null, "", url);
-        setCurrentGame(null);
-        setGameAcc(null);
-    };
-
-    // Payout banner (after closed or we derived an outcome)
-    let payoutStr: string | null = null;
-    if (gameAcc && (["playerwin", "dealerwin", "push"].includes(statusKey) || statusKey === "closed")) {
-        const bet = BigInt(gameAcc.betAmount.toString());
-        const payout = computePayoutLamports(gameAcc.playerCards, gameAcc.dealerCards, bet);
-        const net = payout - bet;
-        payoutStr = fmtSolLamports(net);
-    }
-
-    // UI
-    if (loading) return <main className="p-6">Loading…</main>;
 
     return (
-        <main className="p-6 max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold mb-4">Blackjack</h1>
-            {!publicKey && <p className="text-red-600">Connect your wallet to play.</p>}
-            {error && <p className="text-red-600">{String(error)}</p>}
+        <main className="w-full">
+            <div className="max-w-6xl mx-auto px-6">
+                <h1 className="text-2xl font-bold mb-3">Blackjack</h1>
+                {error && <p className="text-red-500 text-sm mb-3">{String(error)}</p>}
+            </div>
 
-            {/* Start / Bet */}
-            {!currentGame || statusKey === "closed" ? (
-                <div className="rounded-xl border p-4 space-y-3">
-                    <div className="font-semibold">Start a new game</div>
-                    <div className="flex items-center gap-3">
-                        <label className="text-sm opacity-70">Bet (SOL)</label>
-                        <input
-                            value={betSol}
-                            onChange={(e) => setBetSol(e.target.value)}
-                            className="px-3 py-2 rounded-lg border bg-black/20"
-                            placeholder="1.0"
-                            inputMode="decimal"
-                        />
-                        <button
-                            className="px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
-                            disabled={!program || !publicKey || !betSol || Number.isNaN(parseFloat(betSol))}
-                            onClick={startGame}
+            <div className="px-0">
+                <CasinoTable
+                    className="min-h-[680px] lg:min-h-[760px]"
+                    header={
+                        <>
+                            <div className="text-xs text-white/60 break-all">
+                                Game: {currentGame ? currentGame.toBase58() : "—"}
+                            </div>
+                            <button className="text-sm underline opacity-80" onClick={resetGame}>Reset</button>
+                        </>
+                    }
+
+                    topArea={
+                        dealerCards.length
+                            ? <CardHand cards={dealerCards} revealAll={inDealerPhase || roundOver} startDelayMs={80} />
+                            : <div className="text-white/60">—</div>
+                    }
+
+                    bottomArea={
+                        <>
+                            {playerCards.length
+                                ? <CardHand cards={playerCards} revealAll startDelayMs={60} />
+                                : <div className="text-white/60">—</div>
+                            }
+
+                            {!canStartNew && (
+                                <div className="mt-4 flex gap-3">
+                                    <button
+                                        className="px-5 py-2 rounded-xl bg-white/10 text-white disabled:opacity-40"
+                                        disabled={!canHit || inDealerPhase || roundOver}
+                                        onClick={hit}
+                                    >Hit</button>
+                                    <button
+                                        className="px-5 py-2 rounded-xl bg-indigo-600 text-white disabled:opacity-40"
+                                        disabled={!canStand || inDealerPhase || roundOver}
+                                        onClick={stand}
+                                    >Stand</button>
+                                </div>
+                            )}
+
+                            <div className="mt-3 text-xs text-white/60 flex gap-4 flex-wrap">
+                                <span>Bet: {canStartNew ? total : (gameAcc ? Number(gameAcc.betAmount.toString()) / 1_000_000_000 : 0)} SOL</span>
+                                <span>Status: {statusRaw}</span>
+                                <span>RNG cursor: {gameAcc?.rngCursor ?? "—"}</span>
+                            </div>
+                        </>
+                    }
+
+                    // center: click pops; long-press/double-click opens editor
+                    centerArea={
+                        <div
+                            onPointerDown={onStackPointerDown}
+                            onPointerUp={onStackPointerUp}
+                            onDoubleClick={() => setEditOpen(true)}
                         >
-                            Start game
-                        </button>
-                    </div>
-                </div>
-            ) : null}
-
-            {/* Current game panel */}
-            {currentGame && (
-                <div className="mt-6 rounded-xl border p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-400 break-all">
-                            Game: {currentGame.toBase58()}
+                            <BetCircle stack={chipStack} amount={total} onPop={() => canStartNew && popChip()} />
                         </div>
-                        <button className="text-sm underline opacity-70" onClick={resetGame}>
-                            Reset
-                        </button>
-                    </div>
+                    }
 
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="rounded-lg border p-3">
-                            <div className="font-semibold mb-1">Player</div>
-                            <div className="text-lg">{cardsToText(gameAcc?.playerCards || []) || "—"}</div>
+                    footer={
+                        <div className="relative flex flex-col items-center gap-10 mt-4">
+                            {canStartNew && (
+                                <button
+                                    className="px-8 py-2 mt-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg shadow-indigo-900/30 active:scale-95 transition"
+                                    disabled={!publicKey || total <= 0}
+                                    onClick={handleDeal}
+                                    title={total <= 0 ? "Add chips to bet" : "Deal"}
+                                >
+                                    Deal
+                                </button>
+                            )}
+
+                            <ChipRail disabled={!canStartNew} onAdd={addChip} onSub={subChip} onClear={clearChips} />
+
+                            {/* Quick Edit popover */}
+                            <BetEditor
+                                open={editOpen}
+                                onClose={() => setEditOpen(false)}
+                                counts={counts}
+                                onAdd={(d) => addChip(d)}
+                                onSub={(d) => subChip(d)}
+                            />
+
+                            {lastSig && (
+                                <div className="mt-3 text-xs text-white/60 break-all">Last tx: {lastSig}</div>
+                            )}
+
+                            {outcomeKey && payoutInfo && (
+                                <div className={[
+                                    "mt-3 rounded-lg border px-4 py-3 bg-white/5 font-semibold flex items-center gap-3",
+                                    outcomeKey === "playerwin" ? "text-green-400"
+                                        : outcomeKey === "dealerwin" ? "text-red-400" : "opacity-80",
+                                ].join(" ")}>
+                                    <span>
+                                        {outcomeKey === "playerwin" && "🎉 Player wins!"}
+                                        {outcomeKey === "dealerwin" && "💀 Dealer wins!"}
+                                        {outcomeKey === "push" && "🤝 Push!"}
+                                    </span>
+                                    <span>{payoutInfo.netFormatted} SOL</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="rounded-lg border p-3">
-                            <div className="font-semibold mb-1">Dealer</div>
-                            <div className="text-lg">{dealerText()}</div>
-                        </div>
-                    </div>
-
-                    <div className="mt-3 text-sm text-gray-500 flex flex-wrap gap-x-4 gap-y-1">
-                        <span>
-                            Bet: {gameAcc ? Number(gameAcc.betAmount.toString()) / 1_000_000_000 : 0} SOL
-                        </span>
-                        <span>Status: {statusRaw}</span>
-                        <span>RNG cursor: {gameAcc?.rngCursor ?? "-"}</span>
-                    </div>
-
-                    {/* Play controls */}
-                    <div className="mt-4 flex gap-3">
-                        <button
-                            className="px-5 py-2 rounded-xl bg-black text-white disabled:opacity-40"
-                            disabled={!canHit}
-                            onClick={hit}
-                        >
-                            Hit
-                        </button>
-                        <button
-                            className="px-5 py-2 rounded-xl bg-black text-white disabled:opacity-40"
-                            disabled={!canStand}
-                            onClick={stand}
-                        >
-                            Stand
-                        </button>
-                    </div>
-
-                    {/* Last tx */}
-                    {lastSig && (
-                        <div className="mt-4 text-xs text-gray-500 break-all">
-                            Last tx: {lastSig}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {outcomeKey && payoutStr && (
-                <div className="mt-3 rounded-lg border px-4 py-3 bg-white/5 font-semibold flex items-center gap-3">
-                    <span>
-                        {outcomeKey === "playerwin" && "🎉 Player wins!"}
-                        {outcomeKey === "dealerwin" && "💀 Dealer wins!"}
-                        {outcomeKey === "push" && "🤝 Push!"}
-                    </span>
-                    <span
-                        className={
-                            outcomeKey === "playerwin" ? "text-green-400" :
-                                outcomeKey === "dealerwin" ? "text-red-400" : "opacity-70"
-                        }
-                    >
-                        {payoutStr} SOL
-                    </span>
-                </div>
-            )}
+                    }
+                />
+            </div>
         </main>
     );
 }

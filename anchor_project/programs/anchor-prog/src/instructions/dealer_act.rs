@@ -10,11 +10,10 @@ pub fn dealer_hit(ctx: Context<DealerAct>) -> Result<()> {
     let c = draw_unique_card(game)?;
     game.dealer_cards.push(c);
 
-    let dt = hand_total(&game.dealer_cards);
-    if dt > 21 {
-        game.status = Status::Settled;
+    if dealer_should_hit(&game.dealer_cards) {
+        game.status = Status::DealerTurn;
     } else {
-        game.status = Status::PlayerTurn;
+        game.status = Status::Settled;
     }
 
     Ok(())
@@ -26,11 +25,7 @@ pub fn dealer_stand(ctx: Context<DealerAct>) -> Result<()> {
 
     game.dealer_stood = true;
 
-    if game.player_stood {
-        game.status = Status::Settled;
-    } else {
-        game.status = Status::PlayerTurn;
-    }
+    game.status = Status::Settled;
 
     Ok(())
 }

@@ -306,29 +306,19 @@ describe("blackjack-sol — full instruction coverage", () => {
     const { player: p, game } = await startGame(0.02 * LAMPORTS_PER_SOL);
     const rand = Array.from({ length: 32 }, (_, i) => (i * 31 + 5) % 256);
 
-    await program.methods
-      .randomCard(rand as number[])
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-      })
-      .rpc();
+    await program.methods.randomCard(rand as number[]).accounts({ table: tablePda, game: game.publicKey }).rpc();
 
     const before = await program.account.game.fetch(game.publicKey);
     const prevLen = before.playerCards.length;
 
-    await program.methods
-      .hitPlayer()
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-        player: p.publicKey, // not a signer anymore
-      })
-      .rpc();
+    await program.methods.hitPlayer().accounts({ table: tablePda, game: game.publicKey, player: p.publicKey }).rpc();
 
     const after = await program.account.game.fetch(game.publicKey);
     assert.equal(after.playerCards.length, prevLen + 1);
+
+    assert.include(["playerTurn", "dealerTurn", "settled"], Object.keys(after.status as any)[0]);
   });
+
 
   it("player hit — unhappy: not PlayerTurn (before fulfill) should fail", async () => {
     const game = Keypair.generate();
@@ -373,7 +363,6 @@ describe("blackjack-sol — full instruction coverage", () => {
       })
       .rpc();
 
-    // move to Settled by both standing
     await program.methods
       .standPlayer()
       .accounts({
@@ -469,42 +458,21 @@ describe("blackjack-sol — full instruction coverage", () => {
     const { player: p, game } = await startGame(0.02 * LAMPORTS_PER_SOL);
     const rand = Array.from({ length: 32 }, (_, i) => (i * 7 + 11) % 256);
 
-    await program.methods
-      .randomCard(rand as number[])
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-      })
-      .rpc();
+    await program.methods.randomCard(rand as number[]).accounts({ table: tablePda, game: game.publicKey }).rpc();
 
-    // give dealer the turn
-    await program.methods
-      .standPlayer()
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-        player: p.publicKey,
-      })
-      .rpc();
+    await program.methods.standPlayer().accounts({ table: tablePda, game: game.publicKey, player: p.publicKey }).rpc();
 
     const before = await program.account.game.fetch(game.publicKey);
     assert.equal(Object.keys(before.status as any)[0], "dealerTurn");
 
-    await program.methods
-      .hitDealer()
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-      })
-      .rpc();
+    await program.methods.hitDealer().accounts({ table: tablePda, game: game.publicKey }).rpc();
 
     const after = await program.account.game.fetch(game.publicKey);
-    assert.ok(
-      after.dealerCards.length > before.dealerCards.length,
-      "dealer should have drawn"
-    );
-    assert.equal(Object.keys(after.status as any)[0], "playerTurn");
+    assert.ok(after.dealerCards.length > before.dealerCards.length, "dealer should have drawn");
+
+    assert.include(["dealerTurn", "settled"], Object.keys(after.status as any)[0]);
   });
+
 
   it("hit_dealer — unhappy: wrong state", async () => {
     const { game } = await startGame(0.02 * LAMPORTS_PER_SOL);
@@ -535,7 +503,7 @@ describe("blackjack-sol — full instruction coverage", () => {
   });
 
   // ---------- dealer stand ----------
-  it("stand_dealer — happy path", async () => {
+  it("stand dealer — happy path", async () => {
     const { player: p, game } = await startGame(0.02 * LAMPORTS_PER_SOL);
     const rand = Array.from({ length: 32 }, (_, i) => (i * 13 + 19) % 256);
 
@@ -567,7 +535,7 @@ describe("blackjack-sol — full instruction coverage", () => {
 
     const after = await program.account.game.fetch(game.publicKey);
     assert.include(
-      ["settled", "playerTurn"],
+      ["settled"],
       Object.keys(after.status as any)[0]
     );
   });
@@ -606,44 +574,20 @@ describe("blackjack-sol — full instruction coverage", () => {
     const betLamports = 0.02 * LAMPORTS_PER_SOL;
     const rand = Array.from({ length: 32 }, (_, i) => (i * 23 + 17) % 256);
 
-    await program.methods
-      .randomCard(rand as number[])
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-      })
-      .rpc();
+    await program.methods.randomCard(rand as number[]).accounts({ table: tablePda, game: game.publicKey }).rpc();
 
-    await program.methods
-      .standPlayer()
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-        player: p.publicKey,
-      })
-      .rpc();
-
-    await program.methods
-      .standDealer()
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-      })
-      .rpc();
+    await program.methods.standPlayer().accounts({ table: tablePda, game: game.publicKey, player: p.publicKey }).rpc();
 
     const vBefore = await lamports(vaultPda);
     const pBefore = await lamports(p.publicKey);
 
-    await program.methods
-      .end()
-      .accounts({
-        table: tablePda,
-        game: game.publicKey,
-        vault: vaultPda,
-        player: p.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
+    await program.methods.end().accounts({
+      table: tablePda,
+      game: game.publicKey,
+      vault: vaultPda,
+      player: p.publicKey,
+      systemProgram: SystemProgram.programId,
+    }).rpc();
 
     const after = await program.account.game.fetch(game.publicKey);
     assert.equal(Object.keys(after.status as any)[0], "closed");
@@ -651,23 +595,11 @@ describe("blackjack-sol — full instruction coverage", () => {
     const vAfter = await lamports(vaultPda);
     const pAfter = await lamports(p.publicKey);
 
-    const payout = computePayout(
-      after.playerCards as number[],
-      after.dealerCards as number[],
-      betLamports
-    );
-
-    assert.strictEqual(
-      pAfter,
-      pBefore + payout,
-      "player balance delta mismatch"
-    );
-    assert.strictEqual(
-      vAfter,
-      vBefore - payout,
-      "vault balance delta mismatch"
-    );
+    const payout = computePayout(after.playerCards as number[], after.dealerCards as number[], betLamports);
+    assert.strictEqual(pAfter, pBefore + payout, "player balance delta mismatch");
+    assert.strictEqual(vAfter, vBefore - payout, "vault balance delta mismatch");
   });
+
 
   it("settle — unhappy: wrong state (PlayerTurn) should fail", async () => {
     const { game } = await startGame(0.02 * LAMPORTS_PER_SOL);

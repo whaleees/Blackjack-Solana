@@ -1,23 +1,27 @@
-import React from 'react'
+import { ReactNode } from "react";
 
-export function AppHero({
-  children,
-  subtitle,
-  title,
-}: {
-  children?: React.ReactNode
-  subtitle?: React.ReactNode
-  title?: React.ReactNode
-}) {
+type Props = {
+  title: ReactNode;
+  subtitle?: ReactNode;
+  children?: ReactNode;
+};
+
+export function AppHero({ title, subtitle, children }: Props) {
   return (
-    <div className="flex flex-row justify-center py-[16px] md:py-[64px]">
-      <div className="text-center">
-        <div className="max-w-2xl">
-          {typeof title === 'string' ? <h1 className="text-5xl font-bold">{title}</h1> : title}
-          {typeof subtitle === 'string' ? <p className="pt-4 md:py-6">{subtitle}</p> : subtitle}
-          {children}
-        </div>
+    <section className="relative overflow-hidden">
+      {/* soft beams */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[480px] w-[900px] rounded-full bg-gradient-to-r from-indigo-500/30 to-purple-500/30 blur-3xl" />
+        <div className="absolute -bottom-36 right-1/3 h-[360px] w-[640px] rounded-full bg-gradient-to-r from-pink-500/30 to-yellow-500/30 blur-3xl" />
       </div>
-    </div>
-  )
+
+      <div className="relative mx-auto max-w-5xl px-6 text-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">
+          {title}
+        </h1>
+        {subtitle && <p className="mt-2 text-sm md:text-base opacity-80">{subtitle}</p>}
+        {children && <div className="mt-6">{children}</div>}
+      </div>
+    </section>
+  );
 }

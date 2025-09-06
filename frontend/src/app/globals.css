@@ -127,6 +127,303 @@
 
 .wallet-adapter-button-trigger {
   height: auto !important;
-  @apply !border !bg-background !shadow-xs hover:!bg-accent !text-accent-foreground hover:!text-accent-foreground dark:!bg-input/30 !border-input/10 dark:!border-input dark:hover:!bg-input/50;
-  @apply !px-2 !py-[6px] !rounded-md !text-sm !font-semibold !shadow-sm !transition-all;
+  @apply !border !bg-background !shadow-xs !px-2 !py-[6px] !rounded-md !text-sm !font-semibold !shadow-sm !transition-all !text-accent-foreground !border-input/10;
+}
+
+.wallet-adapter-button-trigger:hover {
+  @apply !bg-accent !text-accent-foreground;
+}
+
+.dark .wallet-adapter-button-trigger {
+  @apply !bg-input/30 !border-input;
+}
+
+.dark .wallet-adapter-button-trigger:hover {
+  @apply !bg-input/50;
+}
+
+body {
+  background: radial-gradient(1200px 600px at 70% -10%, rgba(99, 102, 241, 0.08), transparent) no-repeat, #0b0b0d;
+}
+
+@keyframes deal-card {
+  from {
+    transform: translate3d(160px, -120px, 0) rotate(-12deg) scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: translate3d(0, 0, 0) rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes flip-card {
+  from {
+    transform: rotateY(180deg);
+  }
+
+  to {
+    transform: rotateY(0deg);
+  }
+}
+
+.card {
+  width: 68px;
+  height: 96px;
+  perspective: 800px;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 420ms ease;
+}
+
+.card.revealed .card-inner {
+  transform: rotateY(0deg);
+  animation: flip-card 420ms ease both;
+}
+
+.card .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 10px;
+  border: 1px solid hsl(0 0% 100% / .14);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 6px;
+}
+
+.card-front {
+  transform: rotateY(0deg);
+  background: oklch(0.97 0 0);
+  color: oklch(0.18 0 0);
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(135deg, #4c51bf 0%, #7c3aed 100%);
+  color: white;
+}
+
+.card.deal-in {
+  animation: deal-card 280ms ease both;
+}
+
+.card-rank {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.card-suit {
+  font-size: 14px;
+}
+
+.card-center {
+  place-self: center;
+  font-size: 24px;
+}
+
+.app-bg {
+  background:
+    radial-gradient(900px 600px at 70% -10%, rgba(99, 102, 241, .10), transparent) no-repeat,
+    radial-gradient(600px 400px at 15% 10%, rgba(236, 72, 153, .08), transparent) no-repeat,
+    oklch(0.15 0 0);
+}
+
+.glass {
+  background: oklch(0.17 0 0 / .55);
+  border: 1px solid oklch(1 0 0 / .10);
+  backdrop-filter: blur(8px);
+}
+
+.felt {
+  background:
+    radial-gradient(200px 120px at 80% -20%, rgba(255, 255, 255, .05), transparent) no-repeat,
+    radial-gradient(300px 200px at -20% 120%, rgba(255, 255, 255, .05), transparent) no-repeat,
+    #0c1a13;
+  border: 1px solid oklch(1 0 0 / .08);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, .45);
+}
+
+.neon {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 0 24px rgba(139, 92, 246, .28);
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  background: oklch(0.22 0 0 / .6);
+  border: 1px solid oklch(1 0 0 / .10);
+}
+
+.btn {
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: 1px solid oklch(1 0 0 / .10);
+  background: oklch(0.22 0 0 / .7);
+  color: white;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.btn:disabled {
+  opacity: .45;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  background: oklch(0.24 0 0 / .8);
+}
+
+.btn-primary {
+  background: #5b5bd6;
+  border-color: rgba(255, 255, 255, .08);
+}
+
+.btn-primary:hover {
+  background: #6b6be6;
+}
+
+.btn-ghost {
+  background: oklch(0.18 0 0 / .5);
+}
+
+.btn-ghost:hover {
+  background: oklch(0.20 0 0 / .6);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-20%);
+  }
+
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* ===== CASINO TABLE ===== */
+.casino-table {
+  position: relative;
+  border-radius: 28px;
+  /* deep felt w/ vignette */
+  background:
+    radial-gradient(1200px 600px at 70% -20%, rgba(99, 102, 241, .10), transparent) no-repeat,
+    radial-gradient(900px 520px at 20% -10%, rgba(236, 72, 153, .08), transparent) no-repeat,
+    linear-gradient(180deg, rgba(12, 14, 18, .92), rgba(12, 14, 18, .92));
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .04),
+    0 20px 60px rgba(0, 0, 0, .55);
+}
+
+/* soft leather rail around the table */
+.table-rail {
+  position: absolute;
+  inset: -14px;
+  border-radius: 36px;
+  background: linear-gradient(180deg, #191c22, #0f1115);
+  border: 1px solid rgba(255, 255, 255, .06);
+  box-shadow:
+    inset 0 2px 6px rgba(255, 255, 255, .05),
+    0 8px 30px rgba(0, 0, 0, .45);
+  pointer-events: none;
+}
+
+/* thin gold ellipse line on felt */
+.table-arc {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: 78%;
+  height: 44%;
+  transform: translateX(-50%);
+  border-radius: 50% / 44%;
+  border: 2px solid rgba(250, 200, 80, .45);
+  filter: drop-shadow(0 0 6px rgba(250, 200, 80, .25));
+  pointer-events: none;
+}
+
+/* ===== CHIPS ===== */
+.chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+  border: 3px solid #fff;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, .35),
+    inset 0 0 0 4px rgba(255, 255, 255, .12);
+  animation: chipDrop .28s ease-out;
+}
+
+/* color variants */
+.chip.blue {
+  background: radial-gradient(circle at 35% 30%, #50a2ff, #1553b3);
+}
+
+.chip.red {
+  background: radial-gradient(circle at 35% 30%, #ff6767, #b31212);
+}
+
+.chip.green {
+  background: radial-gradient(circle at 35% 30%, #4fe39d, #1a8f5b);
+}
+
+.chip.purple {
+  background: radial-gradient(circle at 35% 30%, #b889ff, #6a38d4);
+}
+
+@keyframes chipDrop {
+  from {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* subtle deal animation you can apply to card wrappers */
+@keyframes dealIn {
+  from {
+    transform: translateY(-16px) scale(.98);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.deal-in {
+  animation: dealIn .22s ease-out both;
+}
+
+.drop-shadow {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .35));
+}
+
+.table-page-backdrop {
+  background:
+    radial-gradient(1100px 480px at 60% -10%, rgba(130, 96, 255, 0.10), transparent 60%),
+    #0b0b0d;
 }

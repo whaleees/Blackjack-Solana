@@ -13,8 +13,10 @@ pub fn player_hit(ctx: Context<PlayerAct>) -> Result<()> {
     let pt = hand_total(&game.player_cards);
     if pt > 21 {
         game.status = Status::Settled;
-    } else {
+    } else if pt == 21 {
         game.status = Status::DealerTurn;
+    } else {
+        game.status = Status::PlayerTurn;
     }
 
     Ok(())
@@ -24,12 +26,8 @@ pub fn player_stand(ctx: Context<PlayerAct>) -> Result<()> {
     let game = &mut ctx.accounts.game;
     require!(game.status == Status::PlayerTurn, BlackjackError::BadState);
     game.player_stood = true;
-
-    if game.dealer_stood {
-        game.status = Status::Settled;
-    } else {
-        game.status = Status::DealerTurn;
-    }
+    
+    game.status = Status::DealerTurn;
 
     Ok(())
 }

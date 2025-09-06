@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/anchor_prog.json`.
  */
 export type AnchorProg = {
-  "address": "9wSigVj1e2gXUL2SCYv59PLDibscoCaJaWjKwTfczpa7",
+  "address": "GeQy8RRD1WqPPAT2nrK7zgxfuq3BkDteL86kMWqHU4T5",
   "metadata": {
     "name": "anchorProg",
     "version": "0.1.0",

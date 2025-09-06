@@ -39,7 +39,7 @@ pub fn settle(ctx: Context<Settle>) -> Result<()> {
                 ctx.accounts.player.to_account_info(),
                 ctx.accounts.system_program.to_account_info(),
             ],
-            &[signer_seeds], // &[&[&[u8]]] as required
+            &[signer_seeds],
         )?;
     }
 

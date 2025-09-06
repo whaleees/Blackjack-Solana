@@ -285,14 +285,16 @@ function ModalAirdrop({ address }: { address: PublicKey }) {
   )
 }
 
+// src/components/account/account-ui.tsx (only the ModalSend part changed)
 function ModalSend({ address }: { address: PublicKey }) {
-  const wallet = useWallet()
-  const mutation = useTransferSol({ address })
-  const [destination, setDestination] = useState('')
-  const [amount, setAmount] = useState('1')
+  const wallet = useWallet();
+  const mutation = useTransferSol({ address });
+  const [destination, setDestination] = useState("");
+  const [amount, setAmount] = useState("1");
+  const [error, setError] = useState<string | null>(null);
 
   if (!address || !wallet.sendTransaction) {
-    return <div>Wallet not connected</div>
+    return <div>Wallet not connected</div>;
   }
 
   return (
@@ -300,33 +302,42 @@ function ModalSend({ address }: { address: PublicKey }) {
       title="Send"
       submitDisabled={!destination || !amount || mutation.isPending}
       submitLabel="Send"
-      submit={() => {
-        mutation.mutateAsync({
-          destination: new PublicKey(destination),
-          amount: parseFloat(amount),
-        })
+      submit={async () => {
+        try {
+          setError(null);
+          const pk = new PublicKey(destination.trim());
+          const amt = parseFloat(amount);
+          if (!Number.isFinite(amt) || amt <= 0) throw new Error("Amount must be a positive number");
+          await mutation.mutateAsync({ destination: pk, amount: amt });
+        } catch (e) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
       }}
     >
+      {error ? <p className="text-red-400 text-sm mb-2">{error}</p> : null}
+
       <Label htmlFor="destination">Destination</Label>
       <Input
         disabled={mutation.isPending}
         id="destination"
         onChange={(e) => setDestination(e.target.value)}
-        placeholder="Destination"
+        placeholder="Destination public key"
         type="text"
         value={destination}
       />
+
       <Label htmlFor="amount">Amount</Label>
       <Input
         disabled={mutation.isPending}
         id="amount"
-        min="1"
+        min="0"
         onChange={(e) => setAmount(e.target.value)}
-        placeholder="Amount"
+        placeholder="Amount in SOL"
         step="any"
         type="number"
         value={amount}
       />
     </AppModal>
-  )
+  );
 }
+

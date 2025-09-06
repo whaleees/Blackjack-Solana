@@ -7,7 +7,7 @@ import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from "@sol
 
 const RPC_URL = "https://api.devnet.solana.com";
 const IDL_PATH = path.join(__dirname, "../target/idl/anchor_prog.json");
-const PROGRAM_ID = new PublicKey("9wSigVj1e2gXUL2SCYv59PLDibscoCaJaWjKwTfczpa7");
+const PROGRAM_ID = new PublicKey("GeQy8RRD1WqPPAT2nrK7zgxfuq3BkDteL86kMWqHU4T5");
 
 function loadLocalKeypair(): Keypair {
     const kpPath = path.join(os.homedir(), ".config", "solana", "id.json");
@@ -56,3 +56,6 @@ async function main() {
 }
 
 main().catch(e => { console.error("❌ initTable failed:", e); process.exit(1); });
+
+// Run
+// npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/initTable.ts
